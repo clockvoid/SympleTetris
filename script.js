@@ -1,10 +1,61 @@
+/*****************************************
+Initialize.
+HTMLのloadが完了する前にする初期化処理。
+*****************************************/
+
 var timer;
 
-var SPACE = false;
-var LEFT = false;
-var TOP = false;
-var RIGHT = false;
-var DOWN = false;
+var SPACE;
+var LEFT;
+var TOP;
+var RIGHT;
+var DOWN;
+
+var key;
+var block;
+var field;
+var ui;
+var tetris;
+
+var highScore;
+
+var blocks;
+var gameoverImage;
+
+var loadImages = function() {
+	blocks = new Array();
+	var loadCounter = 1;
+	var loadBlocks = function() {
+		var imgObj = new Image();
+		imgObj.addEventListener('load', 
+		function() {
+			loadCounter ++;
+			blocks.push(imgObj);
+			if(loadCounter == 8) {
+				return;
+			}
+			else loadBlocks();
+		}, false);
+
+		imgObj.src = loadCounter.toString() + '.png';
+	};
+	loadBlocks();
+	gameoverImage = new Image();
+	var loadGameOver = function() {
+		gameoverImage.addEventListener('load', 
+		function() {
+			return;
+		}, false);
+		gameoverImage.src = 'gameover.png';
+	}
+	loadGameOver();
+}
+
+loadImages();
+
+/*****************************************
+   End of Initialize
+*****************************************/
 
 /*****************************************
 Keyクラス。
@@ -53,7 +104,7 @@ Fieldと連携して働く。
 
 var Block = function() {
 	this.blocks =  [
-		[[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
+		[[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0]],
 		[[0, 0, 0, 0], [0, 2, 0, 0], [0, 2, 2, 2], [0, 0, 0, 0]],
 		[[0, 0, 0, 0], [0, 0, 3, 3], [0, 3, 3, 0], [0, 0, 0, 0]],
 		[[0, 0, 0, 0], [4, 4, 0, 0], [0, 4, 4, 0], [0, 0, 0, 0]],
@@ -115,7 +166,7 @@ Block.prototype.newBlock = function() {
 		this.nextBlock[i] = swp[i].concat();
 	}
 	this.x = 4;
-	this.y = -4;
+	this.y = -3;
 }
 
 Block.prototype.turnRight = function() {
@@ -172,7 +223,6 @@ var Field = function(arg0) {
 }
 
 Field.prototype.newField = function() {
-	this.block.newBlock();
 	for(var i = 0; i < this.row; i ++) {
 		for(var j = 0; j < this.cal; j ++) {
 			this.field[i][j] = (i == 20 || j == 0 || j == 11 ? 9 : 0);
@@ -344,7 +394,7 @@ UIクラス
 ユーザーインターフェイスに関することをやってくれる。
 *****************************************/
 
-var UI = function(arg0, arg1, arg2) {
+var UI = function(arg0, arg1, arg2, arg3, arg4) {
 	this.canvas = arg0;
 	this.scoreBord = arg2;
 	this.ctx = this.canvas.getContext('2d');
@@ -360,9 +410,11 @@ var UI = function(arg0, arg1, arg2) {
 	this.py = 364;
 	this.blockSize = 28;
 	this.blocks = arg1;
-	this.counter = 0;
-	this.ctx.font = '18px "MS P ゴシック"';
-	this.ctx.fillStyle = 'white';
+	this.gameOverImage = arg3;
+	this.result = arg4;
+	this.result.innerHTML = '';
+	this.scoreBord.innerHTML = '0';
+	this.ctx.clearRect(0, 0, 800, 600);
 }
 
 UI.prototype.output = function(field) {
@@ -375,7 +427,6 @@ UI.prototype.output = function(field) {
 	for(var i = 0; i < 21; i ++) {
 		this.oldField[i] = field[i].concat();
 	}
-	//console.log(this.counter ++);
 }
 
 UI.prototype.updateNextBlock = function(arg0) {
@@ -389,6 +440,35 @@ UI.prototype.updateNextBlock = function(arg0) {
 
 UI.prototype.updatePoint = function(arg0) {
 	this.scoreBord.innerHTML = arg0
+}
+
+UI.prototype.gameOver = function(arg0) {
+	var ctx = this.ctx;
+	var scores = '';
+	var counter = 0;
+	var gameOverImage = this.gameOverImage;
+	var x = this.x;
+	var y = this.y;
+	var result = this.result;
+	var fillTimer = setInterval(function() {
+		if(counter <= 560) {
+			ctx.clearRect(240, 20 + (560 - counter), 28 * 10, 1);
+			counter ++;
+		} else {
+			ctx.drawImage(gameOverImage, x, y);
+			var youFlag = true;
+			for(var i = 0; i < 9; i ++) {
+				scores += (i + 1).toString() + ':' + highScore[i].toString();
+				if(highScore[i] == arg0 && youFlag) {
+					scores += '   ←YOU!';
+					youFlag = false;
+				}
+				scores += '<br>';
+			}
+			result.innerHTML = scores;
+			clearInterval(fillTimer);
+		}
+	}, 0);
 }
 
 /*****************************************
@@ -405,19 +485,43 @@ var Tetris = function(arg0, arg1, arg2) {
 	this.key = arg0;
 	this.field = arg1;
 	this.field.newField();
+	this.field.newBlock();
 	this.ui = arg2;
 	this.counter = new Date().getTime();
 	this.stopCounter = 0;
 	this.terrainFlag = false;
 	this.gameover = false;
-	this.gamemode = 'GAME_PLAY';
+	this.first = false;
+	this.gamemode = 'GAME_PLAY_newblock';
 	this.point = 0;
 }
 
 Tetris.prototype.mainLoop = function() {
-	this.uiOutput();
-	this.keyInput();
-	this.game();
+	if(this.gameover) {
+		this.gameOver();
+	} else if(blocks.length != 7 || !gameoverImage) {
+	} else {
+		this.uiOutput();
+		this.keyInput();
+		this.game();
+	}
+}
+
+Tetris.prototype.gameOver = function() {
+	for(var i = 0; i < 9; i ++) {
+		if(this.point >= highScore[i]) {
+			for(var j = 8; j > i; j --) {
+				highScore[j] = highScore[j - 1];
+			}
+			highScore[i] = this.point;
+			break;
+		}
+	}
+	for(var i = 0; i < 9; i ++) {
+		document.cookie = 'score' + i.toString() + '=' + highScore[i].toString();
+	}
+	clearInterval(timer);
+	this.ui.gameOver(this.point);
 }
 
 Tetris.prototype.keyInput = function() {
@@ -457,16 +561,15 @@ Tetris.prototype.keyInput = function() {
 
 Tetris.prototype.game = function() {
 	this.gameover = this.field.isGameover();
-	if(this.gameover)alert("game over");
 	switch(this.gamemode) {
 		case 'GAME_PLAY' : {
 			if(this.field.isCollision('MOVE_DOWN')){
-				if(new Date().getTime() - this.counter > 500) {
+				if(new Date().getTime() - this.counter > 1000) {
 					this.field.blockMoveDown();
 					this.counter = new Date().getTime();
 				}
 			} else {
-				if(this.stopCounter > 50) {
+				if(this.stopCounter > 100) {
 					this.gamemode = 'GAME_PLAY_addblock';
 					this.stopCounter = 0;
 				} else {
@@ -482,7 +585,7 @@ Tetris.prototype.game = function() {
 		} case 'GAME_PLAY_checkline' : {
 			var delNum = this.field.checkLine();
 			if(delNum) {
-				this.point += delNum;
+				this.point += 5 * (delNum - 1) + delNum * 5;
 				this.ui.updatePoint(this.point);
 				this.gamemode = 'GAME_PLAY_deleteline';
 			} else {
@@ -498,7 +601,11 @@ Tetris.prototype.game = function() {
 			this.gamemode = 'GAME_PLAY_newblock';
 			break;
 		} case 'GAME_PLAY_newblock' : {
-			this.sleep(500);
+			if(this.first) {
+				this.sleep(500);
+			} else {
+				this.first = true;
+			}
 			this.field.newBlock();
 			this.ui.updateNextBlock(this.field.getNextBlock());
 			this.gamemode = 'GAME_PLAY';
@@ -508,8 +615,10 @@ Tetris.prototype.game = function() {
 }
 
 Tetris.prototype.uiOutput = function() {
-	var arg = this.field.getField();
-	this.ui.output(arg);
+	if(this.gamemode == 'GAME_PLAY' || this.gamemode == 'GAME_PLAY_deleteline') {
+		var arg = this.field.getField();
+		this.ui.output(arg);
+	}
 }
 
 Tetris.prototype.sleep = function(arg0) {
@@ -525,31 +634,47 @@ Tetris.prototype.sleep = function(arg0) {
       End of Tetris class
 *****************************************/
 
-onload = function() {
-	var key = new Key();
-	var block = new Block();
-	var field = new Field(block);
-	var blocks = new Array();
-	var loadCounter = 1;
-	var loadBlocks = function() {
-		var imgObj = new Image();
-		imgObj.addEventListener('load', 
-		function() {
-			loadCounter ++;
-			blocks.push(imgObj);
-			if(loadCounter == 8)return;
-			else loadBlocks();
-		}, false);
-	
-		imgObj.src = loadCounter.toString() + '.png';
-	};
-	loadBlocks();
+var newGame = function() {
+	SPACE = false;
+	LEFT = false;
+	TOP = false;
+	RIGHT = false;
+	DOWN = false;
+	key = new Key();
+	block = new Block();
+	field = new Field(block);
 	var canvas = document.getElementById('canvas');
 	if(!canvas || !canvas.getContext)return false;
-	var ui = new UI(canvas, blocks, document.getElementById('scoreBord'));
-	var tetris = new Tetris(key, field, ui);
+	ui = new UI(canvas, blocks, document.getElementById('scoreBord'), gameoverImage, document.getElementById('result'));
+	tetris = new Tetris(key, field, ui);
 	timer = setInterval(function() {
 		tetris.mainLoop();
-		if(tetris.gameover)clearInterval(timer);
 	}, 0);
+}
+
+var replay = function() {
+	key = null;
+	block = null;
+	field = null;
+	ui = null;
+	tetris = null;
+	clearInterval(timer);
+	timer = null;
+	newGame();
+}
+
+onload = function() {
+	var cookie = document.cookie;
+	highScore = new Array(9);
+	if(!cookie) {
+		for(var i = 0; i < 9; i ++) {
+			highScore[i] = 100 - i * 10;
+		}
+	} else {
+		var cookies = cookie.split(';');
+		for(var i = 0; i < cookies.length; i ++) {
+			highScore[i] = parseInt(cookies[i].split('=')[1], 10);
+		}
+	}
+	newGame();
 }
