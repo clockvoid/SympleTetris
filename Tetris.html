@@ -1,0 +1,30 @@
+<html>
+	<head>
+		<meta charset='utf-8'>
+		<title>テトリス</title>
+		<link rel='stylesheet' type='text/css' href='styles/style.css'>
+		<script src='scripts/Key.js'></script>
+		<script src='scripts/Block.js'></script>
+		<script src='scripts/Field.js'></script>
+		<script src='scripts/UI.js'></script>
+		<script src='scripts/Tetris.js'></script>
+		<script src='scripts/script.js'></script>
+	</head>
+	<body>
+		<div>
+			<img id='image' src='images/image.png' />
+			<div>
+				<img id='field' src='images/field.png' />
+				<a id='next'>NEXT...</a>
+				<img id='newBlock' src='images/newBlock.png' />
+				<img id='scoreBackGround' src='images/newBlock.png' />
+				<a id='score'>SCORE</a>
+				<div id='scoreBord'></div>
+				<div>
+					<canvas id='canvas' width='800' height='600'></canvas>
+					<div id='result'></div>
+					<input type='button' id='replay' value='リプレイ' onclick = 'replay()' />
+				</div>
+			</div>
+		</div>
+</html>
