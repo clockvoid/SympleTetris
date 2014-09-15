@@ -132,6 +132,7 @@ Tetris.prototype.game = function() {
 			this.field.newBlock();
 			this.ui.updateNextBlock(this.field.getNextBlock());
 			this.gamemode = 'GAME_PLAY';
+			this.counter = new Date().getTime();
 			break;
 		}
 	}

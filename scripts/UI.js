@@ -40,8 +40,8 @@ UI.prototype.output = function(field) {
 
 UI.prototype.updateNextBlock = function(arg0) {
 	this.ctx.clearRect(this.nx, this.ny, this.blockSize * 4, this.blockSize * 4);
-	for(var i = 0; i < 4; i ++) {
-		for(var j = 0; j < 4; j ++) {
+	for(var i = 0; i < arg0.length; i ++) {
+		for(var j = 0; j < arg0[i].length; j ++) {
 			if(arg0[i][j])this.ctx.drawImage(this.blocks[arg0[i][j] - 1], this.nx + this.blockSize * j, this.ny + this.blockSize * (i + 1));
 		}
 	}

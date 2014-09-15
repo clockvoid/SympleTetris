@@ -25,13 +25,13 @@ Field.prototype.newField = function() {
 
 Field.prototype.isCollision = function(type) {
 	var block2 = new Block();
-	block2.block = new Array(4);
-	for(var i = 0; i < 4; i ++) {
+	block2.block = new Array(this.block.getBlock().length);
+	for(var i = 0; i < this.block.getBlock().length; i ++) {
 		block2.block[i] = this.block.getBlock()[i].concat();
 	}
 	block2.x = this.block.getX();
 	block2.y = this.block.getY();
-	//this.block.clone(block2);
+	var nowBlock = block2.getBlock();
 	var flag = true;
 	switch(type) {
 		case 'TURN_RIGHT' : block2.turnRight(); break;
@@ -39,20 +39,18 @@ Field.prototype.isCollision = function(type) {
 		case 'MOVE_DOWN' : block2.moveDown(); break;
 		case 'MOVE_RIGHT' : {
 			block2.moveRight();
-			if(block2.getY() + 1 < 0)flag = false;
 			break;
 		}
 		case 'MOVE_LEFT' : {
 			block2.moveLeft();
-			if(block2.getY() + 1 < 0)flag = false;
 			break;
 		}
 		case 'CREATE_NEW_BLOCK' : break;
 		default : break;
 	}
 	
-	for(var i = 0; i <= 3; i ++) {
-		for(var j = 0; j <= 3; j ++) {
+	for(var i = 0; i < nowBlock.length; i ++) {
+		for(var j = 0; j < nowBlock[i].length; j ++) {
 			if(i + block2.getY() < this.row && j + block2.getX() < this.cal && block2.getY() + i >= 0){
 			if(this.field[i + block2.getY()][j + block2.getX()] && block2.getBlock()[i][j]) {
 				flag = false;
@@ -71,8 +69,8 @@ Field.prototype.addBlock = function() {
 	var array = this.block.getBlock();
 	var x = this.block.getX();
 	var y = this.block.getY();
-	for(var row=0; row < 4; row++){
-		for(var col=0; col < 4; col++){
+	for(var row=0; row < array.length; row++){
+		for(var col=0; col < array[row].length; col++){
 			if(array[row][col] != 0){
 				var num = array[row][col];
 				if(y + row >= 0)this.field[(y + row)][(x + col)] = num;
@@ -129,16 +127,17 @@ Field.prototype.killLine = function() {
 	}
 }
 
-Field.prototype.getField = function() {
+Field.prototype.getField = function() {	
+	var nowBlock = this.block.getBlock();
 	var ans = new Array(this.row);
 	for(var i = 0; i < this.row; i ++) {
 		ans[i] = this.field[i].concat();
 	}
-	for(var i = 0; i <= 3; i ++) {
-		for(var j = 0; j <= 3; j ++) {
+	for(var i = 0; i < nowBlock.length; i ++) {
+		for(var j = 0; j < nowBlock[i].length; j ++) {
 			if(this.block.getY() + i < this.row - 1 && this.block.getX() + j < this.cal - 1 && this.block.getY() + i >= 0) {
-				if(this.block.getBlock()[i][j]) {
-					ans[i + this.block.getY()][j + this.block.getX()] = this.block.getBlock()[i][j];
+				if(nowBlock[i][j]) {
+					ans[i + this.block.getY()][j + this.block.getX()] = nowBlock[i][j];
 				}
 			}
 		}

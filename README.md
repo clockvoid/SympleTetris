@@ -19,7 +19,7 @@ SympleTetris
     right : Blocks move right.
     left : Blocks move left.
   
-    ¦if you push a button writed "ƒŠƒvƒŒƒC" in UI you can retry the game.
+    â€»if you push a button writed "ãƒªãƒ—ãƒ¬ã‚¤" in UI you can retry the game.
   
 ##End##
     You can use this program for free if you want.
